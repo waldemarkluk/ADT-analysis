@@ -1,7 +1,10 @@
 package pl.edu.agh.config;
 
+import com.datastax.driver.core.Session;
+import com.datastax.spark.connector.cql.CassandraConnector;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.SparkContext;
+import org.apache.spark.sql.SparkSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,12 +18,12 @@ public class MainConfiguration {
     @Value("${cassandra.contact.endpoints}")
     private String cassandraContactPoints;
 
-    @Bean
-    public JavaSparkContext javaSparkContext() {
+   @Bean
+    public SparkContext javaSparkContext() {
         SparkConf conf = new SparkConf();
         conf.setAppName("ADT Analysis");
         conf.setMaster("spark://" + sparkMasterEndpoint);
         conf.set("spark.cassandra.connection.host", cassandraContactPoints);
-        return new JavaSparkContext(conf);
+        return new SparkContext(conf);
     }
 }
