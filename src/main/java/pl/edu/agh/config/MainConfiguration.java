@@ -22,7 +22,8 @@ public class MainConfiguration {
     public SparkContext javaSparkContext() {
         SparkConf conf = new SparkConf();
         conf.setAppName("ADT Analysis");
-        conf.setMaster("spark://" + sparkMasterEndpoint);
+//        conf.setMaster("spark://" + sparkMasterEndpoint);
+        conf.setMaster("local[1]");
         conf.set("spark.cassandra.connection.host", cassandraContactPoints);
         return new SparkContext(conf);
     }

@@ -25,6 +25,7 @@ public class AnalyticsController {
     public Object getCorrelation() {
         return CassandraJavaUtil.javaFunctions(sparkContext)
                 .cassandraTable("measurements", "measurements")
-                .limit(1L);
+                .limit(1L)
+                .count();
     }
 }
