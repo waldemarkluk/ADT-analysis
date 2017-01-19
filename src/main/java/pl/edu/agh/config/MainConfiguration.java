@@ -22,6 +22,7 @@ public class MainConfiguration {
     public SparkContext javaSparkContext() {
         SparkConf conf = new SparkConf();
         conf.setAppName("ADT Analysis");
+       conf.set("spark.io.compression.codec", "org.apache.spark.io.LZ4CompressionCodec");
 //        conf.setMaster("spark://" + sparkMasterEndpoint);
         conf.setMaster("local[1]");
         conf.set("spark.cassandra.connection.host", cassandraContactPoints);
