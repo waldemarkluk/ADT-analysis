@@ -26,6 +26,9 @@ import java.util.List;
 @RestController
 public class AnalyticsController {
 
+    private static final String KEYSPACE = "measurements";
+    private static final String TABLE_NAME = "measurements";
+
     @Autowired
     private SparkContext sparkContext;
 
@@ -48,9 +51,14 @@ public class AnalyticsController {
 //        JavaTimeSeriesRDD<Object> objectJavaTimeSeriesRDD = JavaTimeSeriesRDDFactory.timeSeriesRDD()
 
 
-        return CassandraJavaUtil.javaFunctions(sparkContext)
-                .cassandraTable("measurements", "measurements")
-                .count();
+        return "Boop";
 //                .map(CassandraRow::toString).collect();
+    }
+
+    @RequestMapping("/measurements/count")
+    public Object getCount() {
+        return CassandraJavaUtil.javaFunctions(sparkContext)
+                .cassandraTable(KEYSPACE, TABLE_NAME)
+                .count();
     }
 }
