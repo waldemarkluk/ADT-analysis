@@ -7,15 +7,12 @@ import com.cloudera.sparkts.api.java.JavaTimeSeriesRDD;
 import com.cloudera.sparkts.api.java.JavaTimeSeriesRDDFactory;
 import com.datastax.spark.connector.japi.CassandraJavaUtil;
 import com.datastax.spark.connector.japi.CassandraRow;
-import com.datastax.spark.connector.japi.rdd.CassandraTableScanJavaRDD;
+import com.datastax.spark.connector.japi.CassandraStreamingJavaUtil;
 import org.apache.spark.SparkContext;
-import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SQLContext;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -34,13 +31,12 @@ public class AnalyticsController {
 
     @RequestMapping("/correlation")
     public Object getCorrelation() {
-        Dataset<Row> dataset = new SQLContext(sparkContext).read()
-                .format("org.apache.spark.sql.cassandra")
-                .option("table", "measurements")
-                .option("keyspace", "measurements")
-                .load();
-//        JavaRDD<CassandraRow> javaRDD = CassandraJavaUtil.javaFunctions(sparkContext)
-//                .cassandraTable("measurements", "measurements");
+//        Dataset<Row> dataset = new SQLContext(sparkContext).read()
+//                .format("org.apache.spark.sql.cassandra")
+//                .option("table", "measurements")
+//                .option("keyspace", "measurements")
+//                .
+
 
         ZoneId zone = ZoneId.systemDefault();
         DateTimeIndex dtIndex = DateTimeIndexFactory.uniformFromInterval(
@@ -48,9 +44,13 @@ public class AnalyticsController {
                 ZonedDateTime.of(LocalDateTime.parse("2015-09-22T00:00:00"), zone),
                 new BusinessDayFrequency(1, 0));
 
-       // JavaTimeSeriesRDD<Object> objectJavaTimeSeriesRDD = JavaTimeSeriesRDDFactory.timeSeriesRDD();
+
+//        JavaTimeSeriesRDD<Object> objectJavaTimeSeriesRDD = JavaTimeSeriesRDDFactory.timeSeriesRDD()
 
 
-        return dataset;
+        return CassandraJavaUtil.javaFunctions(sparkContext)
+                .cassandraTable("measurements", "measurements")
+                .count();
+//                .map(CassandraRow::toString).collect();
     }
 }
