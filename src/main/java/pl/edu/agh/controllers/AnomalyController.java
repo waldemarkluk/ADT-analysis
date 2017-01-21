@@ -48,8 +48,16 @@ public class AnomalyController extends CassandraTableScanBasedController {
 
     http://datapigtechnologies.com/blog/index.php/highlighting-outliers-in-your-data-with-the-tukey-method/
      */
+
+    /**
+     *
+     * @param sensorId
+     * @param fromDate - in seconds, inclusive
+     * @param toDate - in seconds, exclusiveg
+     * @return
+     */
     @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/anomalies")
-    public ResponseEntity<AnomalyReport> checkForAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Date from, @RequestParam("from") Date to) {
+    public ResponseEntity<AnomalyReport> checkForAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
         return null;
     }
 }
