@@ -1,15 +1,12 @@
 package pl.edu.agh.controllers;
 
-import com.datastax.spark.connector.japi.rdd.CassandraTableScanJavaRDD;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-public class AnalyticsController {
-
-    @Autowired
-    private CassandraTableScanJavaRDD cassandraTable;
+public class AnalyticsController extends CassandraTableScanBasedController {
 
 /*    @RequestMapping("/correlation")
     public Object getCorrelation() {
@@ -36,10 +33,13 @@ public class AnalyticsController {
         return cassandraTable.cassandraCount();
     }
 
-    @RequestMapping("/measurements/count/bla")
-    public long getCountBetweenDates() {
-        return cassandraTable
-                .where("sensorId = ?", "bla")
+    @RequestMapping("/measurements/count/{sensorId}")
+    public Long getCountBetweenDates(
+            @PathVariable String sensorId,
+            @RequestParam(value = "from") Long from,
+            @RequestParam(value = "to") Long to
+    ) {
+        return getMeasurementsBetween(sensorId, from, to)
                 .cassandraCount();
     }
 }

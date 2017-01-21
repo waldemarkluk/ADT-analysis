@@ -35,6 +35,9 @@ public class MainConfiguration {
         conf.setMaster(sparkMasterEndpoint);
         conf.set("spark.executor.memory", sparkExecutorMemory);
         conf.set("spark.cassandra.connection.host", cassandraContactPoints);
+        conf.set("spark.cassandra.read.timeout_ms", "1200000");
+        conf.set("spark.cassandra.connection.timeout_ms", "1200000");
+        conf.set("spark.cassandra.input.split.size_in_mb", "67108864");
         return new SparkContext(conf);
     }
 

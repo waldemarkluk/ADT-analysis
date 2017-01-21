@@ -14,10 +14,7 @@ import java.util.Date;
  */
 
 @RestController
-public class AnomalyController {
-
-    @Autowired
-    private CassandraTableScanJavaRDD<CassandraRow> cassandraTable;
+public class AnomalyController extends CassandraTableScanBasedController {
 
 
     /*
