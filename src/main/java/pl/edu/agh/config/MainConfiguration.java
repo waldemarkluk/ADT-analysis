@@ -18,26 +18,30 @@ public class MainConfiguration {
     @Value("${cassandra.contact.endpoints}")
     private String cassandraContactPoints;
 
-    @Value("${spark.executor.memory}")
-    private String sparkExecutorMemory;
-
     @Value("${cassandra.keyspace}")
     private String keyspace = "measurements";
 
     @Value("${cassandra.table.name}")
     private String tableName = "measurements";
 
+    @Value("${spark.settings}")
+    private String sparkSettings;
+
+    @Value("${spring.application.name}")
+    private String applicationName;
+
     @Bean
     public SparkContext sparkContext() {
         SparkConf conf = new SparkConf();
-        conf.setAppName("ADT Analysis");
-        conf.set("spark.io.compression.codec", "org.apache.spark.io.LZ4CompressionCodec");
-        conf.setMaster(sparkMasterEndpoint);
-        conf.set("spark.executor.memory", sparkExecutorMemory);
-        conf.set("spark.cassandra.connection.host", cassandraContactPoints);
-        conf.set("spark.cassandra.read.timeout_ms", "1200000");
-        conf.set("spark.cassandra.connection.timeout_ms", "1200000");
-        conf.set("spark.cassandra.input.split.size_in_mb", "67108864");
+        conf.setAppName(applicationName + "SparkContext")
+        .setMaster(sparkMasterEndpoint)
+        .set("spark.cassandra.connection.host", cassandraContactPoints);
+
+        for(String option:sparkSettings.split(",")) {
+            String[] keyVal = option.trim().split("=");
+            conf.set(keyVal[0], keyVal[1]);
+        }
+
         return new SparkContext(conf);
     }
 
