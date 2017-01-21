@@ -1,38 +1,17 @@
 package pl.edu.agh.controllers;
 
-import com.cloudera.sparkts.BusinessDayFrequency;
-import com.cloudera.sparkts.DateTimeIndex;
-import com.cloudera.sparkts.api.java.DateTimeIndexFactory;
-import com.cloudera.sparkts.api.java.JavaTimeSeriesRDD;
-import com.cloudera.sparkts.api.java.JavaTimeSeriesRDDFactory;
-import com.datastax.spark.connector.japi.CassandraJavaUtil;
-import com.datastax.spark.connector.japi.CassandraRow;
-import com.datastax.spark.connector.japi.CassandraStreamingJavaUtil;
-import org.apache.spark.SparkContext;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.SQLContext;
+import com.datastax.spark.connector.japi.rdd.CassandraTableScanJavaRDD;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.List;
-
 @RestController
 public class AnalyticsController {
 
-    private static final String KEYSPACE = "measurements";
-    private static final String TABLE_NAME = "measurements";
-
     @Autowired
-    private SparkContext sparkContext;
+    private CassandraTableScanJavaRDD cassandraTable;
 
-    @RequestMapping("/correlation")
+/*    @RequestMapping("/correlation")
     public Object getCorrelation() {
 //        Dataset<Row> dataset = new SQLContext(sparkContext).read()
 //                .format("org.apache.spark.sql.cassandra")
@@ -47,18 +26,20 @@ public class AnalyticsController {
                 ZonedDateTime.of(LocalDateTime.parse("2015-09-22T00:00:00"), zone),
                 new BusinessDayFrequency(1, 0));
 
-
 //        JavaTimeSeriesRDD<Object> objectJavaTimeSeriesRDD = JavaTimeSeriesRDDFactory.timeSeriesRDD()
-
-
         return "Boop";
 //                .map(CassandraRow::toString).collect();
-    }
+    }*/
 
     @RequestMapping("/measurements/count")
-    public Object getCount() {
-        return CassandraJavaUtil.javaFunctions(sparkContext)
-                .cassandraTable(KEYSPACE, TABLE_NAME)
-                .count();
+    public long getCount() {
+        return cassandraTable.cassandraCount();
+    }
+
+    @RequestMapping("/measurements/count/bla")
+    public long getCountBetweenDates() {
+        return cassandraTable
+                .where("sensorId = ?", "bla")
+                .cassandraCount();
     }
 }

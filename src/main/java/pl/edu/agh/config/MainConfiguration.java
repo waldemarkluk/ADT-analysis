@@ -1,10 +1,10 @@
 package pl.edu.agh.config;
 
-import com.datastax.driver.core.Session;
-import com.datastax.spark.connector.cql.CassandraConnector;
+import com.datastax.spark.connector.japi.CassandraJavaUtil;
+import com.datastax.spark.connector.japi.CassandraRow;
+import com.datastax.spark.connector.japi.rdd.CassandraTableScanJavaRDD;
 import org.apache.spark.SparkConf;
 import org.apache.spark.SparkContext;
-import org.apache.spark.sql.SparkSession;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,16 +18,29 @@ public class MainConfiguration {
     @Value("${cassandra.contact.endpoints}")
     private String cassandraContactPoints;
 
-   @Bean
-    public SparkContext javaSparkContext() {
+    @Value("${spark.executor.memory}")
+    private String sparkExecutorMemory;
+
+    @Value("${cassandra.keyspace}")
+    private String keyspace = "measurements";
+
+    @Value("${cassandra.table.name}")
+    private String tableName = "measurements";
+
+    @Bean
+    public SparkContext sparkContext() {
         SparkConf conf = new SparkConf();
         conf.setAppName("ADT Analysis");
-       conf.set("spark.io.compression.codec", "org.apache.spark.io.LZ4CompressionCodec");
-        conf.setMaster("spark://" + sparkMasterEndpoint);
-       conf.set("spark.executor.memory", "471859200");
-       conf.set("spark.driver.cores", "1");
-//        conf.setMaster("local[4]");
+        conf.set("spark.io.compression.codec", "org.apache.spark.io.LZ4CompressionCodec");
+        conf.setMaster(sparkMasterEndpoint);
+        conf.set("spark.executor.memory", sparkExecutorMemory);
         conf.set("spark.cassandra.connection.host", cassandraContactPoints);
         return new SparkContext(conf);
+    }
+
+    @Bean
+    public CassandraTableScanJavaRDD<CassandraRow> cassandraTable() {
+        return CassandraJavaUtil.javaFunctions(sparkContext())
+                .cassandraTable(keyspace, tableName);
     }
 }
