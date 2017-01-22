@@ -10,6 +10,7 @@ import pl.edu.agh.model.HourSensorEntryList;
 import pl.edu.agh.model.SensorEntry;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -70,7 +71,7 @@ public class AnomalyController extends CassandraTableScanBasedController {
         AnomalyReport anomalyReport = new AnomalyReport();
 
         List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
-        List<Pair<Date, Date>> anomaliesRange = getAnomaliesPeterMethod(sensorEntryList);
+        List<Pair<Date, Date>> anomaliesRange = getAnomaliesPeterMethod(sensorEntryList, fromDate, toDate);
         List<Date> anomalies = getAnomaliesVictorMethod(sensorEntryList);
 
         anomalyReport.setEntries(sensorEntryList);
@@ -78,6 +79,42 @@ public class AnomalyController extends CassandraTableScanBasedController {
         anomalyReport.setAnomalies(anomalies);
 
         return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
+    }
+
+    /*
+        Tutaj znajdujemy anomalie w przypadku wadliwego działania czujników, czyli np. gołąb siadł na czujniku
+        i odczyt jest zły.
+
+        Zastosuję tutaj metodę 3 sigma
+     */
+
+    /**
+     * @param sensorId
+     * @param fromDate - in seconds, inclusive
+     * @param toDate   - in seconds, exclusive
+     * @return
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/anomalies")
+    public ResponseEntity<AnomalyReport> checkForAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
+        AnomalyReport anomalyReport = new AnomalyReport();
+
+        List<SensorEntry> sensorEntryList = getEntryList(sensorId, trimDateToDay(fromDate), trimDateToDay(toDate));
+        List<Date> anomalies = getAnomalies(sensorEntryList);
+
+        anomalyReport.setEntries(sensorEntryList);
+        anomalyReport.setAnomalies(anomalies);
+
+        return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
+    }
+
+    private Long trimDateToDay(Long date) {
+        Calendar cal = Calendar.getInstance();
+        cal.setTimeInMillis(date*1000);
+        cal.set(Calendar.HOUR_OF_DAY, 0);
+        cal.set(Calendar.MINUTE, 0);
+        cal.set(Calendar.SECOND, 0);
+        cal.set(Calendar.MILLISECOND, 0);
+        return cal.getTimeInMillis()/1000;
     }
 
     private List<Date> getAnomaliesVictorMethod(List<SensorEntry> sensorEntryList) {
@@ -102,7 +139,7 @@ public class AnomalyController extends CassandraTableScanBasedController {
         return anomalies;
     }
 
-    private List<Pair<Date, Date>> getAnomaliesPeterMethod(List<SensorEntry> sensorEntryList) {
+    private List<Pair<Date, Date>> getAnomaliesPeterMethod(List<SensorEntry> sensorEntryList, Long fromDate, Long toDate) {
         List<Pair<Date, Date>> anomalies = new ArrayList<>();
 
         double standardTime = 90; // SECONDS
@@ -113,7 +150,74 @@ public class AnomalyController extends CassandraTableScanBasedController {
                 anomalies.add(new Pair(sensorEntryList.get(i - 1).getTimestamp(), sensorEntryList.get(i).getTimestamp()));
         }
 
+        // if there is no entry at all
+        if(fromDate != toDate && sensorEntryList.size() != 0)
+            anomalies.add(new Pair(new Date(fromDate), new Date(toDate)));
+
         return anomalies;
+    }
+
+    private List<Date> getAnomalies(List<SensorEntry> sensorEntryList) {
+        List<Date> anomalies = new ArrayList<>();
+        List<List<HourSensorEntryList>> daySensorEntryLists = splitByDays(sensorEntryList);
+        DescriptiveStatistics stats = new DescriptiveStatistics();
+
+        for(int i=0; i<24; i++) {
+            for (int j = 0; j < daySensorEntryLists.size(); j++) {
+                try {
+                    if(daySensorEntryLists.get(j).get(i).getDate().getHours() == i)
+                        stats.addValue(getValuesFromHour(daySensorEntryLists.get(j).get(i)));
+                } catch (Exception e) {
+                    stats.addValue(0);
+                }
+            }
+
+            double mean = stats.getMean();
+            double std = stats.getStandardDeviation();
+
+            for (int j = 0; j < daySensorEntryLists.size(); j++) {
+                try {
+                    if(Math.abs(getValuesFromHour(daySensorEntryLists.get(j).get(i)) - mean) > 3 * std)
+                        anomalies.add(daySensorEntryLists.get(j).get(i).getDate());
+                } catch (Exception e) {
+                    // You've caught me. What do you plan to do with me? ~ exception
+                }
+            }
+        }
+
+        return anomalies;
+    }
+
+    private double getValuesFromHour(HourSensorEntryList hourSensorEntryList) {
+        double result = 0;
+
+        for(SensorEntry sensorEntry : hourSensorEntryList.getSensorEntryList())
+            result += sensorEntry.getValue();
+
+        return result;
+    }
+
+    private List<List<HourSensorEntryList>> splitByDays(List<SensorEntry> sensorEntryList) {
+        List<List<HourSensorEntryList>> daySensorEntryList = new ArrayList<>();
+        List<HourSensorEntryList> hourSensorEntryList = new ArrayList<>();
+
+        Date lastDate = null;
+        List<SensorEntry> tempSensorEntryList = new ArrayList<>();
+        if (sensorEntryList.size() > 0)
+            lastDate = sensorEntryList.get(0).getTimestamp();
+
+        Date currentDate;
+        for (SensorEntry sensorEntry : sensorEntryList) {
+            currentDate = sensorEntry.getTimestamp();
+            if (lastDate.getDay() != currentDate.getDay()) {
+                daySensorEntryList.add(splitByHours(tempSensorEntryList));
+                tempSensorEntryList = new ArrayList<>();
+            }
+            lastDate = currentDate;
+            tempSensorEntryList.add(sensorEntry);
+        }
+
+        return daySensorEntryList;
     }
 
     private List<HourSensorEntryList> splitByHours(List<SensorEntry> sensorEntryList) {
