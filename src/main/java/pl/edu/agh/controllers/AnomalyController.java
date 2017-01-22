@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 public class AnomalyController extends CassandraTableScanBasedController {
-   public final double TOLERANCE = 0.1;
+    public final double TOLERANCE = 0.1;
     /*
     Sprawdzanie anomalii - niesprawności czujnika
     Rozpatrywane w zadanym okresie czasu preferowalnie w kontekście danego dnia
@@ -65,22 +65,26 @@ public class AnomalyController extends CassandraTableScanBasedController {
      */
     @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/pause_anomalies")
     public ResponseEntity<AnomalyReport> checkForPauseAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
-        ResponseEntity<AnomalyReport> report = new ResponseEntity<AnomalyReport>(HttpStatus.OK);
         AnomalyReport anomalyReport = new AnomalyReport();
-        List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
 
-        System.out.println("******ENTRIES*******");
-        for (SensorEntry sensorEntry : sensorEntryList) {
-            System.out.println(sensorEntry.toString());
-        }
+        List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
         List<Pair<Date, Date>> anomalies = getAnomalies(sensorEntryList);
 
-        System.out.println("******ANOMALIES*******");
-        for (Pair<Date, Date> anomaly : anomalies) {
-            System.out.println("Pause anomaly - from: " + anomalies.get(0) + " to: " + anomalies.get(1));
-        }
         anomalyReport.setEntries(sensorEntryList);
         anomalyReport.setAnomaliesDates(anomalies);
+
+        return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
+    }
+
+    /**
+     * @param sensorId
+     * @param fromDate - in seconds, inclusive
+     * @param toDate   - in seconds, exclusive
+     * @return
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/anomalies")
+    public ResponseEntity<AnomalyReport> checkForAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
+        ResponseEntity<AnomalyReport> report = new ResponseEntity<AnomalyReport>(HttpStatus.OK);
 
         return report;
     }
@@ -88,14 +92,12 @@ public class AnomalyController extends CassandraTableScanBasedController {
 
     private List<SensorEntry> getEntryList(String sensorId, Long fromDate, Long toDate) {
         List<SensorEntry> sensorEntryList;
-//        System.out.println(getMeasurementsBetween(sensorId, fromDate, toDate).map(CassandraRow::toString).collect());
-//        System.out.println(getMeasurementsBetween(sensorId, fromDate, toDate).map(CassandraRow::size).collect());
-         sensorEntryList = getMeasurementsBetween(sensorId, fromDate, toDate).map(
+        sensorEntryList = getMeasurementsBetween(sensorId, fromDate, toDate).map(
                 row -> new SensorEntry(
-                                row.getString("sensorid"),
-                                row.getDateTime("time").toDate(),
-                                row.getInt("value")
-                        )
+                        row.getString("sensorid"),
+                        row.getDateTime("time").toDate(),
+                        row.getInt("value")
+                )
         ).collect();
 
         return sensorEntryList;
@@ -107,9 +109,9 @@ public class AnomalyController extends CassandraTableScanBasedController {
         double standardTime = 90; // SECONDS
         double toleranceTime = 90 + standardTime * TOLERANCE;
 
-        for(int i=1; i<sensorEntryList.size(); i++) {
-            if(Math.abs(sensorEntryList.get(i).getTimestamp().getTime() - sensorEntryList.get(i).getTimestamp().getTime()) > toleranceTime )
-                anomalies.add(new Pair(sensorEntryList.get(i-1).getTimestamp(), sensorEntryList.get(i).getTimestamp()));
+        for (int i = 1; i < sensorEntryList.size(); i++) {
+            if (Math.abs(sensorEntryList.get(i).getTimestamp().getTime() - sensorEntryList.get(i).getTimestamp().getTime()) > toleranceTime)
+                anomalies.add(new Pair(sensorEntryList.get(i - 1).getTimestamp(), sensorEntryList.get(i).getTimestamp()));
         }
 
         return anomalies;
