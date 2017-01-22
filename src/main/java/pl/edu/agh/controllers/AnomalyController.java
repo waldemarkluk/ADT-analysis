@@ -1,10 +1,12 @@
 package pl.edu.agh.controllers;
 
 import com.sun.tools.javac.util.Pair;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.edu.agh.model.AnomalyReport;
+import pl.edu.agh.model.HourSensorEntryList;
 import pl.edu.agh.model.SensorEntry;
 
 import java.util.ArrayList;
@@ -18,6 +20,33 @@ import java.util.List;
 @RestController
 public class AnomalyController extends CassandraTableScanBasedController {
     public final double TOLERANCE = 0.1;
+
+    /*
+        Przerwy w działaniu licznika, metodologia:
+        - Dane powinny występować do 90 sekund, jeżeli przerwa jest dłuższa niż ten czas( * tolerancja) to jest
+         to anomalia która trafia do raportu
+     */
+
+    /**
+     * @param sensorId
+     * @param fromDate - in seconds, inclusive
+     * @param toDate   - in seconds, exclusive
+     * @return
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/pause_anomalies")
+    public ResponseEntity<AnomalyReport> checkForPauseAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
+        AnomalyReport anomalyReport = new AnomalyReport();
+
+        List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
+        List<Pair<Date, Date>> anomalies = getAnomalies(sensorEntryList);
+
+        anomalyReport.setEntries(sensorEntryList);
+        anomalyReport.setAnomaliesDates(anomalies);
+
+        return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
+    }
+
+
     /*
     Sprawdzanie anomalii - niesprawności czujnika
     Rozpatrywane w zadanym okresie czasu preferowalnie w kontekście danego dnia
@@ -50,32 +79,6 @@ public class AnomalyController extends CassandraTableScanBasedController {
     http://datapigtechnologies.com/blog/index.php/highlighting-outliers-in-your-data-with-the-tukey-method/
      */
 
-
-    /*
-        Przerwy w działaniu licznika, metodologia:
-        - Dane powinny występować do 90 sekund, jeżeli przerwa jest dłuższa niż ten czas( * tolerancja) to jest
-         to anomalia która trafia do raportu
-     */
-
-    /**
-     * @param sensorId
-     * @param fromDate - in seconds, inclusive
-     * @param toDate   - in seconds, exclusive
-     * @return
-     */
-    @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/pause_anomalies")
-    public ResponseEntity<AnomalyReport> checkForPauseAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
-        AnomalyReport anomalyReport = new AnomalyReport();
-
-        List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
-        List<Pair<Date, Date>> anomalies = getAnomalies(sensorEntryList);
-
-        anomalyReport.setEntries(sensorEntryList);
-        anomalyReport.setAnomaliesDates(anomalies);
-
-        return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
-    }
-
     /**
      * @param sensorId
      * @param fromDate - in seconds, inclusive
@@ -84,9 +87,59 @@ public class AnomalyController extends CassandraTableScanBasedController {
      */
     @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/anomalies")
     public ResponseEntity<AnomalyReport> checkForAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
-        ResponseEntity<AnomalyReport> report = new ResponseEntity<AnomalyReport>(HttpStatus.OK);
+        AnomalyReport anomalyReport = new AnomalyReport();
 
-        return report;
+        List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
+        List<HourSensorEntryList> hourSensorEntryLists = splitByHours(sensorEntryList);
+        List<Date> anomalies = getAnomaliesTemp(hourSensorEntryLists);
+
+        anomalyReport.setEntries(sensorEntryList);
+        anomalyReport.setAnomalies(anomalies);
+
+        return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
+    }
+
+    private List<Date> getAnomaliesTemp(List<HourSensorEntryList> hourSensorEntryLists) {
+        List<Date> anomalies = new ArrayList<>();
+
+        DescriptiveStatistics stats = new DescriptiveStatistics();
+        for (int i = 0; i < hourSensorEntryLists.size(); i++) {
+            stats.addValue(hourSensorEntryLists.get(i).getSensorEntryList().size());
+        }
+
+        double q1 = stats.getPercentile(25);
+        double q3 = stats.getPercentile(75);
+        double iqr = q3 - q1;
+        double lowerFence = q1 - 1.5 * iqr;
+
+        for (HourSensorEntryList hourSensorEntryList : hourSensorEntryLists) {
+            if (hourSensorEntryList.getSensorEntryList().size() < lowerFence)
+                anomalies.add(hourSensorEntryList.getDate());
+        }
+
+        return anomalies;
+    }
+
+    private List<HourSensorEntryList> splitByHours(List<SensorEntry> sensorEntryList) {
+        List<HourSensorEntryList> hourSensorEntryList = new ArrayList<>();
+
+        Date lastDate = null;
+        List<SensorEntry> tempSensorEntryList = new ArrayList<>();
+        if (sensorEntryList.size() > 0)
+            lastDate = sensorEntryList.get(0).getTimestamp();
+
+        Date currentDate;
+        for (SensorEntry sensorEntry : sensorEntryList) {
+            currentDate = sensorEntry.getTimestamp();
+            if (lastDate.getHours() != currentDate.getHours()) {
+                hourSensorEntryList.add(new HourSensorEntryList(lastDate, tempSensorEntryList));
+                tempSensorEntryList = new ArrayList<>();
+            }
+            lastDate = currentDate;
+            tempSensorEntryList.add(sensorEntry);
+        }
+
+        return hourSensorEntryList;
     }
 
 
