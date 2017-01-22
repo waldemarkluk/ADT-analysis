@@ -1,5 +1,7 @@
 package pl.edu.agh.model;
 
+import com.sun.tools.javac.util.Pair;
+
 import java.util.Date;
 import java.util.List;
 
@@ -11,6 +13,7 @@ public class AnomalyReport {
     // można zastąpić wewnętrzną reprezentacją, żeby nie przekazywać setki razy id sensora dla zapytania o konkretny sensor?
     private List<SensorEntry> entries;
     private List<Date> anomalies;
+    private List<Pair<Date, Date>> anomaliesDates;
 
     public List<Date> getAnomalies() {
         return anomalies;
@@ -26,5 +29,13 @@ public class AnomalyReport {
 
     public void setEntries(List<SensorEntry> entries) {
         this.entries = entries;
+    }
+
+    public List<Pair<Date, Date>> getAnomaliesDates() {
+        return anomaliesDates;
+    }
+
+    public void setAnomaliesDates(List<Pair<Date, Date>> anomaliesDates) {
+        this.anomaliesDates = anomaliesDates;
     }
 }
