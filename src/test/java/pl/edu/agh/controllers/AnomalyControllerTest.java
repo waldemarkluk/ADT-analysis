@@ -119,7 +119,7 @@ public class AnomalyControllerTest {
         List<Date> anomalies = anomalyAlgorithms.getPauseAnomaliesVictorMethod(sensorEntries);
 
         //then
-        assertEquals(anomalies.size(), 1);
+        assertEquals(anomalies.size(), 0);
         assertEquals(pauseAnomaliesResult.size(), 1);
         //TODO object comparation
     }
