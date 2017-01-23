@@ -2,12 +2,11 @@ package pl.edu.agh.controllers;
 
 
 import org.testng.annotations.Test;
+import pl.edu.agh.logic.AnomalyAlgorithms;
 import pl.edu.agh.model.SensorEntry;
 import pl.edu.agh.utils.SensorEntriesBuilder;
 
 import java.util.List;
-
-import static pl.edu.agh.controllers.AnomalyController.*;
 
 public class AnomalyControllerTest {
     @Test
@@ -34,7 +33,7 @@ public class AnomalyControllerTest {
 
     @Test
     public void shouldNotFindAnomalyWhenInputIsWithinTolerance() {
-        long toleranceEdge = ((long) TOLERANCE * 90000L) - 1L; // tolerance time - 1 miliseconds
+        long toleranceEdge = ((long) AnomalyAlgorithms.TOLERANCE * 90000L) - 1L; // tolerance time - 1 miliseconds
 
         //given
         List<SensorEntry> sensorEntries  = new SensorEntriesBuilder()
@@ -118,7 +117,7 @@ public class AnomalyControllerTest {
 
     @Test
     public void shouldFindAnomalyWhenSampleIsALittleBitOutOfTolerance() {
-        long toleranceEdge = ((long) TOLERANCE * 90000L) + 1L; // tolerance time + 1 miliseconds
+        long toleranceEdge = ((long) AnomalyAlgorithms.TOLERANCE * 90000L) + 1L; // tolerance time + 1 miliseconds
         //given
         List<SensorEntry> sensorEntries  = new SensorEntriesBuilder()
                 .addSensorEntry("CAUTC11FD318_D11_D1_1", 1446375600000L + toleranceEdge, 1) // 2015/11/01 12:00:00
