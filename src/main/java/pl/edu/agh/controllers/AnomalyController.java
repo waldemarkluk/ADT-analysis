@@ -1,16 +1,13 @@
 package pl.edu.agh.controllers;
 
 import com.sun.tools.javac.util.Pair;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.edu.agh.logic.AnomalyAlgorithms;
 import pl.edu.agh.model.AnomalyReport;
-import pl.edu.agh.model.HourSensorEntryList;
 import pl.edu.agh.model.SensorEntry;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -71,8 +68,8 @@ public class AnomalyController extends CassandraTableScanBasedController {
         AnomalyReport anomalyReport = new AnomalyReport();
 
         List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
-        List<Pair<Date, Date>> anomaliesRange = new AnomalyAlgorithms().getAnomaliesPeterMethod(sensorEntryList, fromDate, toDate);
-        List<Date> anomalies = new AnomalyAlgorithms().getAnomaliesVictorMethod(sensorEntryList);
+        List<Pair<Date, Date>> anomaliesRange = new AnomalyAlgorithms().getPouseAnomaliesPeterMethod(sensorEntryList, fromDate, toDate);
+        List<Date> anomalies = new AnomalyAlgorithms().getPouseAnomaliesVictorMethod(sensorEntryList);
 
         anomalyReport.setEntries(sensorEntryList);
         anomalyReport.setAnomaliesDates(anomaliesRange);
