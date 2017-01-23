@@ -43,7 +43,7 @@ public class AnomalyAlgorithms {
         double toleranceTime = 90 + standardTime * AnomalyAlgorithms.TOLERANCE;
 
         for (int i = 1; i < sensorEntryList.size(); i++) {
-            if (Math.abs(sensorEntryList.get(i).getTimestamp().getTime() - sensorEntryList.get(i).getTimestamp().getTime()) > toleranceTime)
+            if (Math.abs(sensorEntryList.get(i).getTimestamp().getTime() - sensorEntryList.get(i-1).getTimestamp().getTime())/1000 > toleranceTime)
                 anomalies.add(new ImmutablePair<>(sensorEntryList.get(i - 1).getTimestamp(), sensorEntryList.get(i).getTimestamp()));
         }
 

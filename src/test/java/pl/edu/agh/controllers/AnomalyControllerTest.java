@@ -138,18 +138,23 @@ public class AnomalyControllerTest {
         List<Date> anomalies = anomalyAlgorithms.getPauseAnomaliesVictorMethod(sensorEntries);
 
         //then
-        assertEquals(anomalies.size(), 1);
-        assertEquals(pauseAnomaliesResult.size(), 1);
+        assertEquals(anomalies.size(), 0);
+        assertEquals(pauseAnomaliesResult.size(), 29);
     }
 
     @Test
     public void shouldFindPauseAnomalyWhenSampleIsALittleBitOutOfTolerance() {
-        long toleranceEdge = ((long) AnomalyAlgorithms.TOLERANCE * 90000L) + 2000L; // tolerance time + 1 miliseconds
-        //given
+        long toleranceEdge = (long)(AnomalyAlgorithms.TOLERANCE * 90000L) + 2000L; // tolerance time + 1 miliseconds
+        // given
         List<SensorEntry> sensorEntries = new SensorEntriesBuilder()
-                .addSensorEntry(SENSOR_ID, START_DATE + toleranceEdge, 1) // 2015/11/01 12:00:00
-                .addEntriesForSensor(SENSOR_ID, (START_DATE + MILISECONDS_90_SEC) + toleranceEdge, 1, 6)
-                .addSensorEntry(SENSOR_ID, (START_DATE + MILISECONDS_90_SEC * 7) - toleranceEdge, 1) // 2015/11/01 12:10:30
+                .addSensorEntry(SENSOR_ID, START_DATE, 1) // 2015/11/01 12:00:00
+                .addSensorEntry(SENSOR_ID, 1446375690000L, 1) // 2015/11/01 12:01:30
+                .addSensorEntry(SENSOR_ID, 1446375780000L, 1) // 2015/11/01 12:03:00
+                .addSensorEntry(SENSOR_ID, 1446375870000L + toleranceEdge, 1) // 2015/11/01 12:04:41
+                .addSensorEntry(SENSOR_ID, 1446375960000L, 1) // 2015/11/01 12:06:00
+                .addSensorEntry(SENSOR_ID, 1446376050000L, 1) // 2015/11/01 12:07:30
+                .addSensorEntry(SENSOR_ID, 1446376140000L, 1) // 2015/11/01 12:09:00
+                .addSensorEntry(SENSOR_ID, 1446376230000L, 1) // 2015/11/01 12:10:30
                 .build();
 
         //when
@@ -158,16 +163,17 @@ public class AnomalyControllerTest {
         List<Date> anomalies = anomalyAlgorithms.getPauseAnomaliesVictorMethod(sensorEntries);
 
         //then
-        assertEquals(anomalies.size(), 2);
-        assertEquals(pauseAnomaliesResult.size(), 2);
+        assertEquals(anomalies.size(), 0);
+        assertEquals(pauseAnomaliesResult.size(), 1);
     }
 
     @Test
     public void shouldFindAnomalyWhenNumberOfCarsHasStrangePeak() {
         //given
         List<SensorEntry> sensorEntries = new SensorEntriesBuilder()
-                .addSensorEntry(SENSOR_ID, START_DATE, 18)
-                .addEntriesForSensor(SENSOR_ID, START_DATE + MILISECONDS_90_SEC , 1, 1000) // 2015/11/01 12:04:30
+                .addEntriesForSensorWithSpecifiedInterval(SENSOR_ID, START_DATE, 1, 3, 1000 * 60 * 60) // add 1 entry per hour
+                .addSensorEntry(SENSOR_ID, 1446375870000L + 1000 * 60 * 60 * 3, 18) // 2015/11/01 15:00:00
+                .addEntriesForSensorWithSpecifiedInterval(SENSOR_ID, START_DATE + 1000 * 60 * 60 * 4, 1, 3, 1000 * 60 * 60) // add 1 entry per hour
                 .build();
 
         //when
