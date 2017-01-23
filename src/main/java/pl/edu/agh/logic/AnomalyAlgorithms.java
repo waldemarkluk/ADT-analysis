@@ -1,7 +1,6 @@
 package pl.edu.agh.logic;
 
-import org.apache.commons.lang3.tuple.ImmutablePair;
-import org.apache.commons.lang3.tuple.Pair;
+import com.sun.tools.javac.util.Pair;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import pl.edu.agh.model.HourSensorEntryList;
 import pl.edu.agh.model.SensorEntry;
@@ -13,7 +12,7 @@ import java.util.List;
 public class AnomalyAlgorithms {
     public static final double TOLERANCE = 0.1;
 
-    public List<Date> getPouseAnomaliesVictorMethod(List<SensorEntry> sensorEntryList) {
+    public List<Date> getPauseAnomaliesVictorMethod(List<SensorEntry> sensorEntryList) {
         List<Date> anomalies = new ArrayList<>();
         List<HourSensorEntryList> hourSensorEntryLists = splitByHours(sensorEntryList);
         DescriptiveStatistics stats = new DescriptiveStatistics();
@@ -35,7 +34,7 @@ public class AnomalyAlgorithms {
         return anomalies;
     }
 
-    public List<Pair<Date, Date>> getPouseAnomaliesPeterMethod(List<SensorEntry> sensorEntryList, Long fromDate, Long toDate) {
+    public List<Pair<Date, Date>> getPauseAnomaliesPeterMethod(List<SensorEntry> sensorEntryList, Long fromDate, Long toDate) {
         List<Pair<Date, Date>> anomalies = new ArrayList<>();
 
         double standardTime = 90; // SECONDS
@@ -43,12 +42,12 @@ public class AnomalyAlgorithms {
 
         for (int i = 1; i < sensorEntryList.size(); i++) {
             if (Math.abs(sensorEntryList.get(i).getTimestamp().getTime() - sensorEntryList.get(i).getTimestamp().getTime()) > toleranceTime)
-                anomalies.add(new ImmutablePair<>(sensorEntryList.get(i - 1).getTimestamp(), sensorEntryList.get(i).getTimestamp()));
+                anomalies.add(new Pair(sensorEntryList.get(i - 1).getTimestamp(), sensorEntryList.get(i).getTimestamp()));
         }
 
         // if there is no entry at all
-        if(fromDate != toDate && sensorEntryList.size() != 0)
-            anomalies.add(new ImmutablePair<>(new Date(fromDate), new Date(toDate)));
+       if(fromDate != toDate && sensorEntryList.size() == 0)
+            anomalies.add(new Pair(new Date(fromDate), new Date(toDate)));
 
         return anomalies;
     }
