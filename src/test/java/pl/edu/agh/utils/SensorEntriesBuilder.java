@@ -5,8 +5,9 @@ import pl.edu.agh.model.SensorEntry;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Random;
 
-import static pl.edu.agh.controllers.AnomalyControllerTest.MILISECONDS_90_SEC;
+import static pl.edu.agh.controllers.AnomalyControllerTest.*;
 
 public class SensorEntriesBuilder {
     List<SensorEntry> entries;
@@ -26,14 +27,23 @@ public class SensorEntriesBuilder {
 
     public SensorEntriesBuilder addEntriesForSensor(String sensorId, long startDate, int value, int quantityOfEntries) {
         for (int i = 0; i < quantityOfEntries; i++) {
-            addSensorEntry(sensorId, startDate + i* MILISECONDS_90_SEC, value);
+            addSensorEntry(sensorId, startDate + i * MILISECONDS_90_SEC, value);
         }
         return this;
     }
 
     public SensorEntriesBuilder addEntriesForSensorWithSpecifiedInterval(String sensorId, long startDate, int value, int quantityOfEntries, long interval) {
         for (int i = 0; i < quantityOfEntries; i++) {
-            addSensorEntry(sensorId, startDate + i* interval, value);
+            addSensorEntry(sensorId, startDate + i * interval, value);
+        }
+        return this;
+    }
+
+    public SensorEntriesBuilder addRandomEntriesForSensor(String sensorId, long startDate, int quantityOfEntries, int randomMin, int randomMax) {
+        Random rand = new Random();
+        for (int i = 0; i < quantityOfEntries; i++) {
+            int value = rand.nextInt((randomMax -randomMin) +1) + randomMin;
+            addSensorEntry(sensorId, startDate + i * MILISECONDS_90_SEC, value);
         }
         return this;
     }
