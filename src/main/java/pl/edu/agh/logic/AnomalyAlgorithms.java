@@ -12,7 +12,7 @@ import java.util.List;
 public class AnomalyAlgorithms {
     public static final double TOLERANCE = 0.1;
 
-    public List<Date> getPouseAnomaliesVictorMethod(List<SensorEntry> sensorEntryList) {
+    public List<Date> getPauseAnomaliesVictorMethod(List<SensorEntry> sensorEntryList) {
         List<Date> anomalies = new ArrayList<>();
         List<HourSensorEntryList> hourSensorEntryLists = splitByHours(sensorEntryList);
         DescriptiveStatistics stats = new DescriptiveStatistics();
@@ -34,7 +34,7 @@ public class AnomalyAlgorithms {
         return anomalies;
     }
 
-    public List<Pair<Date, Date>> getPouseAnomaliesPeterMethod(List<SensorEntry> sensorEntryList, Long fromDate, Long toDate) {
+    public List<Pair<Date, Date>> getPauseAnomaliesPeterMethod(List<SensorEntry> sensorEntryList, Long fromDate, Long toDate) {
         List<Pair<Date, Date>> anomalies = new ArrayList<>();
 
         double standardTime = 90; // SECONDS
@@ -46,7 +46,7 @@ public class AnomalyAlgorithms {
         }
 
         // if there is no entry at all
-        if(fromDate != toDate && sensorEntryList.size() != 0)
+       if(fromDate != toDate && sensorEntryList.size() == 0)
             anomalies.add(new Pair(new Date(fromDate), new Date(toDate)));
 
         return anomalies;

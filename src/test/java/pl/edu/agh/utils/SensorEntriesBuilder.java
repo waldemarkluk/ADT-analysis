@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import static pl.edu.agh.controllers.AnomalyControllerTest.MILISECONDS_90_SEC;
+
 public class SensorEntriesBuilder {
     List<SensorEntry> entries;
 
@@ -20,5 +22,12 @@ public class SensorEntriesBuilder {
 
     public List<SensorEntry> build() {
         return entries;
+    }
+
+    public SensorEntriesBuilder addEntriesForSensor(String sensorId, long startDate, int value, int quantityOfEntries) {
+        for (int i = 0; i < quantityOfEntries; i++) {
+            addSensorEntry(sensorId, startDate + i* MILISECONDS_90_SEC, value);
+        }
+        return this;
     }
 }

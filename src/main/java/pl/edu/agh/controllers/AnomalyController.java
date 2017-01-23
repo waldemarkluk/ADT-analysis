@@ -68,8 +68,8 @@ public class AnomalyController extends CassandraTableScanBasedController {
         AnomalyReport anomalyReport = new AnomalyReport();
 
         List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
-        List<Pair<Date, Date>> anomaliesRange = new AnomalyAlgorithms().getPouseAnomaliesPeterMethod(sensorEntryList, fromDate, toDate);
-        List<Date> anomalies = new AnomalyAlgorithms().getPouseAnomaliesVictorMethod(sensorEntryList);
+        List<Pair<Date, Date>> anomaliesRange = new AnomalyAlgorithms().getPauseAnomaliesPeterMethod(sensorEntryList, fromDate, toDate);
+        List<Date> anomalies = new AnomalyAlgorithms().getPauseAnomaliesVictorMethod(sensorEntryList);
 
         anomalyReport.setEntries(sensorEntryList);
         anomalyReport.setAnomaliesDates(anomaliesRange);
