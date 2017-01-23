@@ -36,8 +36,8 @@ public class AnalyticsController extends CassandraTableScanBasedController {
     @RequestMapping("/measurements/count/{sensorId}")
     public Long getCountBetweenDates(
             @PathVariable String sensorId,
-            @RequestParam(value = "from") Long from,
-            @RequestParam(value = "to") Long to
+            @RequestParam("from") Long from,
+            @RequestParam("to") Long to
     ) {
         return getMeasurementsBetween(sensorId, from, to)
                 .cassandraCount();

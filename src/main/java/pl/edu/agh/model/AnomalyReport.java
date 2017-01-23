@@ -1,6 +1,7 @@
 package pl.edu.agh.model;
 
-import com.sun.tools.javac.util.Pair;
+
+import org.apache.commons.lang3.tuple.Pair;
 
 import java.util.Date;
 import java.util.List;

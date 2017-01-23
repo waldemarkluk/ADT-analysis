@@ -1,6 +1,7 @@
 package pl.edu.agh.logic;
 
-import com.sun.tools.javac.util.Pair;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import pl.edu.agh.model.HourSensorEntryList;
 import pl.edu.agh.model.SensorEntry;
@@ -42,12 +43,12 @@ public class AnomalyAlgorithms {
 
         for (int i = 1; i < sensorEntryList.size(); i++) {
             if (Math.abs(sensorEntryList.get(i).getTimestamp().getTime() - sensorEntryList.get(i).getTimestamp().getTime()) > toleranceTime)
-                anomalies.add(new Pair(sensorEntryList.get(i - 1).getTimestamp(), sensorEntryList.get(i).getTimestamp()));
+                anomalies.add(new ImmutablePair<>(sensorEntryList.get(i - 1).getTimestamp(), sensorEntryList.get(i).getTimestamp()));
         }
 
         // if there is no entry at all
         if(fromDate != toDate && sensorEntryList.size() != 0)
-            anomalies.add(new Pair(new Date(fromDate), new Date(toDate)));
+            anomalies.add(new ImmutablePair<>(new Date(fromDate), new Date(toDate)));
 
         return anomalies;
     }

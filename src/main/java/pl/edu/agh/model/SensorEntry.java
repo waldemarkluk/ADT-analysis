@@ -1,5 +1,7 @@
 package pl.edu.agh.model;
 
+import com.datastax.spark.connector.japi.CassandraRow;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -43,5 +45,12 @@ public class SensorEntry implements Serializable{
 
     public String toString() {
         return sensorId + ", " + timestamp + ", " + value;
+    }
+
+    public static SensorEntry fromCassandraRow(CassandraRow row) {
+        return new SensorEntry(
+                row.getString("sensorid"),
+                row.getDateTime("time").toDate(),
+                row.getInt("value"));
     }
 }

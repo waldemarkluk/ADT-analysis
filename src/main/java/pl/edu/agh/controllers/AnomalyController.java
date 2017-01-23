@@ -1,6 +1,6 @@
 package pl.edu.agh.controllers;
 
-import com.sun.tools.javac.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -116,13 +116,9 @@ public class AnomalyController extends CassandraTableScanBasedController {
 
     private List<SensorEntry> getEntryList(String sensorId, Long fromDate, Long toDate) {
         List<SensorEntry> sensorEntryList;
-        sensorEntryList = getMeasurementsBetween(sensorId, fromDate, toDate).map(
-                row -> new SensorEntry(
-                        row.getString("sensorid"),
-                        row.getDateTime("time").toDate(),
-                        row.getInt("value")
-                )
-        ).collect();
+        sensorEntryList = getMeasurementsBetween(sensorId, fromDate, toDate)
+                .map(SensorEntry::fromCassandraRow)
+                .collect();
 
         return sensorEntryList;
     }
