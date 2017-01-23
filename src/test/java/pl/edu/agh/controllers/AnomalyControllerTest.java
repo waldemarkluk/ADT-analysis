@@ -171,9 +171,9 @@ public class AnomalyControllerTest {
     public void shouldFindAnomalyWhenNumberOfCarsHasStrangePeak() {
         //given
         List<SensorEntry> sensorEntries = new SensorEntriesBuilder()
-                .addEntriesForSensorWithSpecifiedInterval(SENSOR_ID, START_DATE, 1, 3, 1000 * 60 * 60) // add 1 entry per hour
-                .addSensorEntry(SENSOR_ID, 1446375870000L + 1000 * 60 * 60 * 3, 18) // 2015/11/01 15:00:00
-                .addEntriesForSensorWithSpecifiedInterval(SENSOR_ID, START_DATE + 1000 * 60 * 60 * 4, 1, 3, 1000 * 60 * 60) // add 1 entry per hour
+                .addEntriesForSensorWithSpecifiedInterval(SENSOR_ID, START_DATE, 1, 48, 1000 * 60 * 60 ) // add 1 entry per hour
+                .addSensorEntry(SENSOR_ID, 1446375870000L + 1000 * 60 * 60 * 48, 18) // 2015/11/03 12:04:30
+                .addEntriesForSensorWithSpecifiedInterval(SENSOR_ID, START_DATE + 1000 * 60 * 60 * 49, 1, 48, 1000 * 60 * 60) // add 1 entry per hour
                 .build();
 
         //when
