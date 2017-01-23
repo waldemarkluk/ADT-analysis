@@ -1,6 +1,7 @@
 package pl.edu.agh.logic;
 
-import com.sun.tools.javac.util.Pair;
+import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import pl.edu.agh.model.HourSensorEntryList;
 import pl.edu.agh.model.SensorEntry;
@@ -8,6 +9,7 @@ import pl.edu.agh.model.SensorEntry;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Objects;
 
 public class AnomalyAlgorithms {
     public static final double TOLERANCE = 0.1;
@@ -17,8 +19,8 @@ public class AnomalyAlgorithms {
         List<HourSensorEntryList> hourSensorEntryLists = splitByHours(sensorEntryList);
         DescriptiveStatistics stats = new DescriptiveStatistics();
 
-        for (int i = 0; i < hourSensorEntryLists.size(); i++) {
-            stats.addValue(hourSensorEntryLists.get(i).getSensorEntryList().size());
+        for (HourSensorEntryList hourSensorEntryList1 : hourSensorEntryLists) {
+            stats.addValue(hourSensorEntryList1.getSensorEntryList().size());
         }
 
         double q1 = stats.getPercentile(25);
@@ -42,12 +44,12 @@ public class AnomalyAlgorithms {
 
         for (int i = 1; i < sensorEntryList.size(); i++) {
             if (Math.abs(sensorEntryList.get(i).getTimestamp().getTime() - sensorEntryList.get(i).getTimestamp().getTime()) > toleranceTime)
-                anomalies.add(new Pair(sensorEntryList.get(i - 1).getTimestamp(), sensorEntryList.get(i).getTimestamp()));
+                anomalies.add(new ImmutablePair<>(sensorEntryList.get(i - 1).getTimestamp(), sensorEntryList.get(i).getTimestamp()));
         }
 
         // if there is no entry at all
-       if(fromDate != toDate && sensorEntryList.size() == 0)
-            anomalies.add(new Pair(new Date(fromDate), new Date(toDate)));
+       if(!Objects.equals(fromDate, toDate) && sensorEntryList.size() == 0)
+            anomalies.add(new ImmutablePair<>(new Date(fromDate), new Date(toDate)));
 
         return anomalies;
     }
@@ -58,10 +60,10 @@ public class AnomalyAlgorithms {
         DescriptiveStatistics stats = new DescriptiveStatistics();
 
         for(int i=0; i<24; i++) {
-            for (int j = 0; j < daySensorEntryLists.size(); j++) {
+            for (List<HourSensorEntryList> daySensorEntryList : daySensorEntryLists) {
                 try {
-                    if(daySensorEntryLists.get(j).get(i).getDate().getHours() == i)
-                        stats.addValue(getValuesFromHour(daySensorEntryLists.get(j).get(i)));
+                    if (daySensorEntryList.get(i).getDate().getHours() == i)
+                        stats.addValue(getValuesFromHour(daySensorEntryList.get(i)));
                 } catch (Exception e) {
                     stats.addValue(0);
                 }
@@ -70,13 +72,15 @@ public class AnomalyAlgorithms {
             double mean = stats.getMean();
             double std = stats.getStandardDeviation();
 
-            for (int j = 0; j < daySensorEntryLists.size(); j++) {
+            int j = 0;
+            while (j < daySensorEntryLists.size()) {
                 try {
                     if(Math.abs(getValuesFromHour(daySensorEntryLists.get(j).get(i)) - mean) > 3 * std)
                         anomalies.add(daySensorEntryLists.get(j).get(i).getDate());
                 } catch (Exception e) {
                     // You've caught me. What do you plan to do with me? ~ exception
                 }
+                j++;
             }
         }
 

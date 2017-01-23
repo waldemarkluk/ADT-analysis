@@ -1,7 +1,7 @@
 package pl.edu.agh.controllers;
 
 
-import com.sun.tools.javac.util.Pair;
+import org.apache.commons.lang3.tuple.Pair;
 import org.testng.annotations.Test;
 import pl.edu.agh.logic.AnomalyAlgorithms;
 import pl.edu.agh.model.SensorEntry;

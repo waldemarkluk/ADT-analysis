@@ -6,14 +6,17 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+import pl.edu.agh.logic.PearsonCorrelation;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.HOURS;
+import static pl.edu.agh.logic.PearsonCorrelation.computeCorrelation;
 
 /**
  * Created by Wiktor on 2017-01-20.
@@ -24,7 +27,7 @@ public class CorrelationController extends CassandraTableScanBasedController {
     private final static Logger LOG = Logger.getLogger(CorrelationController.class);
 
 
-    private SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy");
+    private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 
     /*
                 W ten sposób dostanę współczynnik korelacji między A i B dla konkretnego dnia
@@ -49,35 +52,31 @@ public class CorrelationController extends CassandraTableScanBasedController {
         Date date = dateFormat.parse(dateString);
         long startOfDay = TimeUnit.MILLISECONDS.toSeconds(date.getTime());
 
-        double dailyAvgX = sumValuesForDay(firstSensorId, startOfDay) / 24.0;
-        double dailyAvgY = sumValuesForDay(secondSensorId, startOfDay) / 24.0;
+        long xDailySum = 0;
+        long yDailySum = 0;
 
-        long numerator = 0;
+        Map<Integer, Long> xSumPerHourCache = new HashMap<>();
+        Map<Integer, Long> ySumPerHourCache = new HashMap<>();
         for (int i = 0; i < 24; i++) {
-            numerator += (sumValuesForPeriod(firstSensorId, startOfDay, i) - dailyAvgX)
-                    * (sumValuesForPeriod(secondSensorId, startOfDay, i) - dailyAvgY);
+            long xSumPerHour = sumValuesForPeriod(firstSensorId, startOfDay, i);
+            xSumPerHourCache.put(i, xSumPerHour);
+            long ySumPerHour = sumValuesForPeriod(secondSensorId, startOfDay, i);
+            ySumPerHourCache.put(i, ySumPerHour);
+
+            xDailySum += xSumPerHour;
+            yDailySum += ySumPerHour;
         }
 
-        long partialSumX = 0;
-        for (int i = 0; i < 24; i++) {
-            partialSumX += Math.pow(sumValuesForPeriod(firstSensorId, startOfDay, i) - dailyAvgX, 2);
-        }
+        validateSum(xDailySum, firstSensorId);
+        validateSum(yDailySum, secondSensorId);
 
-        long partialSumY = 0;
-        for (int i = 0; i < 24; i++) {
-            partialSumY += Math.pow((sumValuesForPeriod(secondSensorId, startOfDay, i) - dailyAvgY), 2);
-        }
-
-        double denominator = Math.sqrt(partialSumX * partialSumY);
-        if (denominator == 0) {
-            return 0;
-        } else {
-            return numerator / denominator;
-        }
+        return PearsonCorrelation.computeCorrelation(xDailySum, yDailySum, xSumPerHourCache, ySumPerHourCache);
     }
 
-    private long sumValuesForDay(String sensorId, long fromTime) {
-        return sumValuesForPeriod(sensorId, fromTime, fromTime + DAYS.toSeconds(1));
+    private static void validateSum(long sum, String sensorId) {
+        if (sum == 0) {
+            throw new RuntimeException(sensorId + " did not register any value that day");
+        }
     }
 
     private long sumValuesForPeriod(String sensorId, long startTime, int hour) {
