@@ -19,38 +19,6 @@ import java.util.List;
 @RestController
 public class AnomalyController extends CassandraTableScanBasedController {
 
-      /*
-    Sprawdzanie anomalii - niesprawności czujnika
-    Rozpatrywane w zadanym okresie czasu preferowalnie w kontekście danego dnia
-    ---
-    Proponowany output
-    {
-    entries: [
-    {
-        timestamp: "",
-        count: 0
-    }
-    ],
-    anomalies: []
-    }
-    ---
-    Dla danego dnia policz liczbę wpisów dla danego sensora grupując godzinami.
-    Wylicz 1. i 3. kwartyl
-    Wylicz IQR
-    Oblicz dolną wartość akceptowalną "lower fence"  1.Q - współczynnik * IQR
-    ! Współczynnik też można by sparametryzować, ale słabo z czasem, więc zostańmy przy 1.5
-    Każdą wartość poniżej tej wartości uznaj za anomalię.
-
-    ---
-    UWAGA
-    Zdarzają się przypadki, że czujniki były martwe przez całe dni - w takich wypadkach ta metoda nie zadziała.
-    Przed wykonaniem powyższych kroków proponuję policzyć analogicznie anomalie dla DNI w kontekście WSZYSTKICH danych
-    (bądź tygodnia na przykład). Jeżeli w tym wypadku dzień zostanie wypluty jako anomalia, to po prostu wszystkie wpisy
-    z tego dnia zakwalifikuj jako anomalię.
-
-    http://datapigtechnologies.com/blog/index.php/highlighting-outliers-in-your-data-with-the-tukey-method/
-     */
-
     /*
         Przerwy w działaniu licznika, metodologia:
         - Dane powinny występować do 90 sekund, jeżeli przerwa jest dłuższa niż ten czas( * tolerancja) to jest
@@ -69,12 +37,47 @@ public class AnomalyController extends CassandraTableScanBasedController {
 
         List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
         List<Pair<Date, Date>> anomaliesRange = new AnomalyAlgorithms().getPauseAnomaliesPeterMethod(sensorEntryList, fromDate, toDate);
-        List<Date> anomalies = new AnomalyAlgorithms().getPauseAnomaliesVictorMethod(sensorEntryList);
 
         anomalyReport.setEntries(sensorEntryList);
         anomalyReport.setAnomaliesDates(anomaliesRange);
-        anomalyReport.setAnomalies(anomalies);
+        return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
+    }
 
+
+    /*
+    ---
+    Dla danego dnia policz liczbę wpisów dla danego sensora grupując godzinami.
+    Wylicz 1. i 3. kwartyl
+    Wylicz IQR
+    Oblicz dolną wartość akceptowalną "lower fence"  1.Q - współczynnik * IQR
+    ! Współczynnik też można by sparametryzować, ale słabo z czasem, więc zostańmy przy 1.5
+    Każdą wartość poniżej tej wartości uznaj za anomalię.
+
+    ---
+    UWAGA
+    Zdarzają się przypadki, że czujniki były martwe przez całe dni - w takich wypadkach ta metoda nie zadziała.
+    Przed wykonaniem powyższych kroków proponuję policzyć analogicznie anomalie dla DNI w kontekście WSZYSTKICH danych
+    (bądź tygodnia na przykład). Jeżeli w tym wypadku dzień zostanie wypluty jako anomalia, to po prostu wszystkie wpisy
+    z tego dnia zakwalifikuj jako anomalię.
+
+    http://datapigtechnologies.com/blog/index.php/highlighting-outliers-in-your-data-with-the-tukey-method/
+     */
+    /**
+     * Searches for pause anomalies using Tokey method
+     * @param sensorId
+     * @param fromDate - in seconds, inclusive
+     * @param toDate   - in seconds, exclusive
+     * @return
+     */
+    @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/pause_anomalies_tokey")
+    public ResponseEntity<AnomalyReport> checkForPauseAnomaliesTokey(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
+        AnomalyReport anomalyReport = new AnomalyReport();
+
+        List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
+        List<Date> anomalies = new AnomalyAlgorithms().getPauseAnomaliesVictorMethod(sensorEntryList);
+
+        anomalyReport.setEntries(sensorEntryList);
+        anomalyReport.setAnomalies(anomalies);
         return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
     }
 
@@ -106,12 +109,12 @@ public class AnomalyController extends CassandraTableScanBasedController {
 
     private Long trimDateToDay(Long date) {
         Calendar cal = Calendar.getInstance();
-        cal.setTimeInMillis(date*1000);
+        cal.setTimeInMillis(date * 1000);
         cal.set(Calendar.HOUR_OF_DAY, 0);
         cal.set(Calendar.MINUTE, 0);
         cal.set(Calendar.SECOND, 0);
         cal.set(Calendar.MILLISECOND, 0);
-        return cal.getTimeInMillis()/1000;
+        return cal.getTimeInMillis() / 1000;
     }
 
     private List<SensorEntry> getEntryList(String sensorId, Long fromDate, Long toDate) {
