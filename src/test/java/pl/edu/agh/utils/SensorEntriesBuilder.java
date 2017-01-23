@@ -13,17 +13,12 @@ public class SensorEntriesBuilder {
         entries = new ArrayList<>();
     }
 
-    public SensorEntriesBuilder withSensorEntry(SensorEntry sensorEntry) {
-        entries.add(sensorEntry);
-        return this;
-    }
-
     public SensorEntriesBuilder addSensorEntry(String sensorId, long milisecSinceEpoch, int value) {
         entries.add(new SensorEntry(sensorId, new Date(milisecSinceEpoch), value));
         return this;
     }
 
-    public void pushToDB() {
-        //TODO
+    public List<SensorEntry> build() {
+        return entries;
     }
 }

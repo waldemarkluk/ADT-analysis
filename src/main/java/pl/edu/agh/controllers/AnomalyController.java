@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 public class AnomalyController extends CassandraTableScanBasedController {
-    public final double TOLERANCE = 0.1;
+    public static final double TOLERANCE = 0.1;
 
       /*
     Sprawdzanie anomalii - niesprawności czujnika
