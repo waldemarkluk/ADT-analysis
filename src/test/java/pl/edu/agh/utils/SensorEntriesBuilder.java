@@ -30,4 +30,11 @@ public class SensorEntriesBuilder {
         }
         return this;
     }
+
+    public SensorEntriesBuilder addEntriesForSensorWithSpecifiedInterval(String sensorId, long startDate, int value, int quantityOfEntries, long interval) {
+        for (int i = 0; i < quantityOfEntries; i++) {
+            addSensorEntry(sensorId, startDate + i* interval, value);
+        }
+        return this;
+    }
 }
