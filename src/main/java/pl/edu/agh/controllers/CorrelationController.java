@@ -1,13 +1,16 @@
 package pl.edu.agh.controllers;
 
+import com.datastax.spark.connector.japi.CassandraRow;
 import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.Function;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import pl.edu.agh.logic.PearsonCorrelation;
 
+import java.io.Serializable;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -16,7 +19,6 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static java.util.concurrent.TimeUnit.HOURS;
-import static pl.edu.agh.logic.PearsonCorrelation.computeCorrelation;
 
 /**
  * Created by Wiktor on 2017-01-20.
@@ -85,11 +87,27 @@ public class CorrelationController extends CassandraTableScanBasedController {
 
     private long sumValuesForPeriod(String sensorId, long startTime, long endTime) {
         JavaRDD<Long> rdd = getMeasurementsBetween(sensorId, startTime, endTime)
-                .map(row -> row.getLong("value"));
+                .map(new ValueGetter());
         if (rdd.isEmpty()) {
             return 0L;
         } else {
-            return rdd.reduce((a, b) -> a + b);
+            return rdd.reduce(new SumReduce());
+        }
+    }
+
+    public static final class ValueGetter implements Function<CassandraRow, Long>, Serializable {
+
+        @Override
+        public Long call(CassandraRow v1) throws Exception {
+            return v1.getLong("value");
+        }
+    }
+
+    public static final class SumReduce implements org.apache.spark.api.java.function.Function2<Long, Long, Long>, Serializable {
+
+        @Override
+        public Long call(Long v1, Long v2) throws Exception {
+            return v1 + v2;
         }
     }
 }
