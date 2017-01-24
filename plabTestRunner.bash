@@ -4,16 +4,6 @@ HTTP_METHOD=$1
 URL=$2
 ITERATIONS=$3
 
-nohup ./run.bash > app.log 2>&1 &
-echo "`date` Waiting for application to start..."
-sleep 5
-
-grep_result=
-while [ -n "$grep_result" ]
-do
-    sleep 5
-    grep_result=`grep "Started Application in" app.log | grep -v grep`
-done
 
 echo "`date` Starting test for $HTTP_METHOD $URL"
 
