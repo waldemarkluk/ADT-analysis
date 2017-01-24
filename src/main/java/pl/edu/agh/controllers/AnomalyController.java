@@ -1,8 +1,6 @@
 package pl.edu.agh.controllers;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import pl.edu.agh.logic.AnomalyAlgorithms;
 import pl.edu.agh.model.AnomalyReport;
@@ -32,7 +30,7 @@ public class AnomalyController extends CassandraTableScanBasedController {
      * @return
      */
     @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/pause_anomalies")
-    public ResponseEntity<AnomalyReport> checkForPauseAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
+    public AnomalyReport checkForPauseAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
         AnomalyReport anomalyReport = new AnomalyReport();
 
         List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
@@ -40,7 +38,7 @@ public class AnomalyController extends CassandraTableScanBasedController {
 
         anomalyReport.setEntries(sensorEntryList);
         anomalyReport.setAnomaliesDates(anomaliesRange);
-        return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
+        return anomalyReport;
     }
 
 
@@ -62,15 +60,17 @@ public class AnomalyController extends CassandraTableScanBasedController {
 
     http://datapigtechnologies.com/blog/index.php/highlighting-outliers-in-your-data-with-the-tukey-method/
      */
+
     /**
      * Searches for pause anomalies using Tokey method
+     *
      * @param sensorId
      * @param fromDate - in seconds, inclusive
      * @param toDate   - in seconds, exclusive
      * @return
      */
     @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/pause_anomalies_tokey")
-    public ResponseEntity<AnomalyReport> checkForPauseAnomaliesTokey(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
+    public AnomalyReport checkForPauseAnomaliesTokey(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
         AnomalyReport anomalyReport = new AnomalyReport();
 
         List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
@@ -78,7 +78,7 @@ public class AnomalyController extends CassandraTableScanBasedController {
 
         anomalyReport.setEntries(sensorEntryList);
         anomalyReport.setAnomalies(anomalies);
-        return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
+        return anomalyReport;
     }
 
     /*
@@ -95,7 +95,7 @@ public class AnomalyController extends CassandraTableScanBasedController {
      * @return
      */
     @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/anomalies")
-    public ResponseEntity<AnomalyReport> checkForAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
+    public AnomalyReport checkForAnomalies(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
         AnomalyReport anomalyReport = new AnomalyReport();
 
         List<SensorEntry> sensorEntryList = getEntryList(sensorId, trimDateToDay(fromDate), trimDateToDay(toDate));
@@ -104,7 +104,7 @@ public class AnomalyController extends CassandraTableScanBasedController {
         anomalyReport.setEntries(sensorEntryList);
         anomalyReport.setAnomalies(anomalies);
 
-        return new ResponseEntity<AnomalyReport>(anomalyReport, HttpStatus.OK);
+        return anomalyReport;
     }
 
     private Long trimDateToDay(Long date) {
