@@ -60,17 +60,15 @@ public class AnomalyController extends CassandraTableScanBasedController {
 
     http://datapigtechnologies.com/blog/index.php/highlighting-outliers-in-your-data-with-the-tukey-method/
      */
-
     /**
-     * Searches for pause anomalies using Tokey method
-     *
+     * Searches for pause anomalies using Tukey method
      * @param sensorId
      * @param fromDate - in seconds, inclusive
      * @param toDate   - in seconds, exclusive
      * @return
      */
-    @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/pause_anomalies_tokey")
-    public AnomalyReport checkForPauseAnomaliesTokey(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
+    @RequestMapping(method = RequestMethod.GET, value = "/sensors/{sensorId}/pause_anomalies_tukey")
+    public AnomalyReport checkForPauseAnomaliesTukey(@PathVariable("sensorId") String sensorId, @RequestParam("from") Long fromDate, @RequestParam("to") Long toDate) {
         AnomalyReport anomalyReport = new AnomalyReport();
 
         List<SensorEntry> sensorEntryList = getEntryList(sensorId, fromDate, toDate);
